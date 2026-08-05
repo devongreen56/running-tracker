@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "러닝 트래커",
+    "slug": "running-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6F5F1"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "화면이 꺼져 있어도 러닝 중 이동 거리를 계속 측정하기 위해 위치 정보가 필요해요.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourname.runningtracker",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "러닝 중 이동 거리를 측정하기 위해 위치 정보가 필요해요.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "화면이 꺼져 있어도 러닝 중 이동 거리를 계속 측정하기 위해 위치 정보가 필요해요.",
+        "UIBackgroundModes": ["location"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2F6B4F"
+      },
+      "package": "com.yourname.runningtracker",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
+    }
+  }
+}

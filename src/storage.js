@@ -1,0 +1,42 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const PROFILE_KEY = 'runapp_profile';
+const HISTORY_KEY = 'runapp_history';
+
+export const defaultProfile = {
+  weight: 65,
+  height: 170,
+  age: 30,
+  gender: 'f',
+  goalDist: 15,
+  goalPace: '6:30',
+};
+
+export async function getProfile() {
+  try {
+    const raw = await AsyncStorage.getItem(PROFILE_KEY);
+    return raw ? JSON.parse(raw) : defaultProfile;
+  } catch (e) {
+    return defaultProfile;
+  }
+}
+
+export async function saveProfile(profile) {
+  await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
+
+export async function getHistory() {
+  try {
+    const raw = await AsyncStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function addRun(record) {
+  const history = await getHistory();
+  history.push(record);
+  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  return history;
+}
