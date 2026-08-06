@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
-import { getProfile, addRun } from '../storage';
-import { fmtTime, fmtPace, calcKcal } from '../utils';
+import { getProfile, getHistory, addRun } from '../storage';
+import { fmtTime, calcKcal } from '../utils';
 import { LOCATION_TASK_NAME, runData, resetRunData, getElapsedSeconds } from '../locationTask';
 import { colors } from '../theme';
 
@@ -11,6 +11,7 @@ export default function RunScreen({ navigation }) {
   const [distance, setDistance] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [pastTotals, setPastTotals] = useState({ distance: 0, duration: 0 });
 
   const tickRef = useRef(null);
 
@@ -18,6 +19,12 @@ export default function RunScreen({ navigation }) {
     (async () => {
       const p = await getProfile();
       setProfile(p);
+
+      const history = await getHistory();
+      setPastTotals({
+        distance: history.reduce((a, r) => a + r.distance, 0),
+        duration: history.reduce((a, r) => a + r.duration, 0),
+      });
 
       const fg = await Location.requestForegroundPermissionsAsync();
       if (fg.status !== 'granted') {
@@ -95,8 +102,6 @@ export default function RunScreen({ navigation }) {
     navigation.replace('완료', { record });
   }
 
-  const avgPace = distance > 0 ? elapsed / distance : 0;
-
   return (
     <View style={styles.screen}>
       <View style={styles.statusPillWrap}>
@@ -117,16 +122,16 @@ export default function RunScreen({ navigation }) {
           <Text style={styles.cellValue}>{fmtTime(elapsed)}</Text>
         </View>
         <View style={styles.cell}>
-          <Text style={styles.cellLabel}>평균 페이스</Text>
-          <Text style={styles.cellValue}>{fmtPace(avgPace)}</Text>
+          <Text style={styles.cellLabel}>누적 운동시간</Text>
+          <Text style={styles.cellValue}>{fmtTime(pastTotals.duration + elapsed)}</Text>
         </View>
         <View style={styles.cell}>
           <Text style={styles.cellLabel}>소모 칼로리</Text>
           <Text style={styles.cellValue}>{profile ? Math.round(calcKcal(profile.weight, distance)) : 0}</Text>
         </View>
         <View style={styles.cell}>
-          <Text style={styles.cellLabel}>체중 기준</Text>
-          <Text style={styles.cellValue}>{profile ? profile.weight : '--'} kg</Text>
+          <Text style={styles.cellLabel}>누적 거리</Text>
+          <Text style={styles.cellValue}>{(pastTotals.distance + distance).toFixed(1)} km</Text>
         </View>
       </View>
 

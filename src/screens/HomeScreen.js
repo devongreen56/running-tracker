@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getProfile, getHistory } from '../storage';
+import { requestStepPermission, getTodaySteps, startLiveStepTracking, stopLiveStepTracking } from '../steps';
 import { colors } from '../theme';
 
 export default function HomeScreen({ navigation }) {
@@ -9,6 +10,7 @@ export default function HomeScreen({ navigation }) {
   const [weekDist, setWeekDist] = useState(0);
   const [streak, setStreak] = useState(0);
   const [weekDays, setWeekDays] = useState([]);
+  const [steps, setSteps] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -47,7 +49,15 @@ export default function HomeScreen({ navigation }) {
           });
         }
         setWeekDays(days);
+
+        const granted = await requestStepPermission();
+        if (granted) {
+          setSteps(await getTodaySteps());
+          startLiveStepTracking(setSteps);
+        }
       })();
+
+      return () => stopLiveStepTracking();
     }, [])
   );
 
@@ -73,6 +83,11 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.label}>이번 주 거리</Text>
           <Text style={styles.value}>{weekDist.toFixed(1)} <Text style={styles.small}>km</Text></Text>
         </View>
+      </View>
+
+      <View style={[styles.statCard, styles.stepsCard]}>
+        <Text style={styles.label}>오늘 걸음 수</Text>
+        <Text style={styles.value}>{steps.toLocaleString()} <Text style={styles.small}>걸음</Text></Text>
       </View>
 
       <View style={styles.goalCard}>
@@ -117,6 +132,7 @@ const styles = StyleSheet.create({
   hello: { fontSize: 24, marginTop: 2, marginBottom: 18, fontWeight: '600', color: colors.ink },
   statRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   statCard: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 14 },
+  stepsCard: { marginBottom: 20 },
   label: { fontSize: 11, color: colors.muted, marginBottom: 6 },
   value: { fontSize: 24, color: colors.ink, fontWeight: '600' },
   small: { fontSize: 13, color: colors.muted, fontWeight: '400' },

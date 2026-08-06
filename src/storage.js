@@ -4,12 +4,12 @@ const PROFILE_KEY = 'runapp_profile';
 const HISTORY_KEY = 'runapp_history';
 
 export const defaultProfile = {
-  weight: 65,
-  height: 170,
-  age: 30,
-  gender: 'f',
-  goalDist: 15,
-  goalPace: '6:30',
+  weight: 67,
+  height: 174,
+  age: 50,
+  gender: 'm',
+  goalDist: 5,
+  goalPace: '8:00',
 };
 
 export async function getProfile() {

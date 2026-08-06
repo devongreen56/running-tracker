@@ -67,6 +67,15 @@ eas build --platform ios --profile preview
 eas build --platform android --profile preview
 ```
 
+## 걸음 수 기능 추가
+app.json에 걸음 수 측정 권한(NSMotionUsageDescription, ACTIVITY_RECOGNITION)이 새로 추가됐기 때문에,
+반드시 **다시 빌드**해야 반영돼요:
+```
+eas build --platform android --profile preview
+```
+앱을 처음 열면 동작 및 피트니스 활동 권한을 물어봐요 — 허용해야 걸음 수가 표시돼요.
+안드로이드 기기에 따라 앱이 꺼져 있는 동안의 걸음까지는 못 세고, 앱을 켠 이후부터의 걸음만 정확히 세는 경우가 있어요 (기기 하드웨어 걸음 센서 지원 여부에 따라 달라요).
+
 ## 3. app.json에서 바꿔야 할 것
 `com.yourname.runningtracker` 부분을 원하는 고유 패키지 이름으로 바꿔주세요 (예: `com.jisoo.runtracker`).
 이름과 아이콘은 이미 채워져 있어요.
