@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getProfile, getHistory } from '../storage';
+import { getProfile, getHistory, getInProgress, clearInProgress, addRun } from '../storage';
 import { requestStepPermission, getTodaySteps, startLiveStepTracking, stopLiveStepTracking } from '../steps';
+import { calcKcal } from '../utils';
 import { colors } from '../theme';
 
 export default function HomeScreen({ navigation }) {
@@ -16,6 +17,34 @@ export default function HomeScreen({ navigation }) {
     useCallback(() => {
       (async () => {
         const p = await getProfile();
+
+        // If the app was force-closed mid-run, a snapshot may still be sitting
+        // in storage — recover it into history instead of losing the run.
+        const inProgress = await getInProgress();
+        if (inProgress && inProgress.distanceKm > 0.01) {
+          const pausedMs =
+            (inProgress.pausedTotalMs || 0) +
+            (inProgress.pausedAt ? inProgress.savedAt - inProgress.pausedAt : 0);
+          const recoveredElapsed = Math.max(0, (inProgress.savedAt - inProgress.startTime - pausedMs) / 1000);
+          const recoveredKcal = calcKcal(p.weight, inProgress.distanceKm);
+          await addRun({
+            date: new Date(inProgress.startTime).toISOString(),
+            distance: inProgress.distanceKm,
+            duration: recoveredElapsed,
+            kcal: recoveredKcal,
+            avgPace: recoveredElapsed / inProgress.distanceKm,
+            splits: inProgress.splits || [],
+            path: inProgress.path || [],
+          });
+          await clearInProgress();
+          Alert.alert(
+            '이전 운동이 자동 저장됐어요',
+            `앱이 비정상 종료됐지만 기록은 남아있었어요: ${inProgress.distanceKm.toFixed(2)}km, ${Math.round(
+              recoveredElapsed / 60
+            )}분. 기록 탭에서 확인할 수 있어요.`
+          );
+        }
+
         const h = await getHistory();
         setProfile(p);
 

@@ -10,11 +10,14 @@ import HomeScreen from './src/screens/HomeScreen';
 import RunScreen from './src/screens/RunScreen';
 import SummaryScreen from './src/screens/SummaryScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import RunDetailScreen from './src/screens/RunDetailScreen';
+import MapFullScreenScreen from './src/screens/MapFullScreenScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import { colors } from './src/theme';
 
 const Tab = createBottomTabNavigator();
 const RunStack = createNativeStackNavigator();
+const HistoryStack = createNativeStackNavigator();
 
 function RunStackScreen() {
   return (
@@ -22,6 +25,24 @@ function RunStackScreen() {
       <RunStack.Screen name="RunLive" component={RunScreen} />
       <RunStack.Screen name="완료" component={SummaryScreen} />
     </RunStack.Navigator>
+  );
+}
+
+function HistoryStackScreen() {
+  return (
+    <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
+      <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
+      <HistoryStack.Screen
+        name="RunDetail"
+        component={RunDetailScreen}
+        options={{ headerShown: true, title: '러닝 경로' }}
+      />
+      <HistoryStack.Screen
+        name="MapFullScreen"
+        component={MapFullScreenScreen}
+        options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'fade' }}
+      />
+    </HistoryStack.Navigator>
   );
 }
 
@@ -42,7 +63,7 @@ export default function App() {
       >
         <Tab.Screen name="홈" component={HomeScreen} />
         <Tab.Screen name="러닝" component={RunStackScreen} options={{ tabBarStyle: { display: 'none' } }} />
-        <Tab.Screen name="기록" component={HistoryScreen} />
+        <Tab.Screen name="기록" component={HistoryStackScreen} />
         <Tab.Screen name="프로필" component={ProfileScreen} />
       </Tab.Navigator>
     </NavigationContainer>

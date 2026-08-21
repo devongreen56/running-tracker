@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
-import { getProfile, getHistory, addRun } from '../storage';
+import { getProfile, getHistory, addRun, clearInProgress } from '../storage';
 import { fmtTime, calcKcal } from '../utils';
 import { LOCATION_TASK_NAME, runData, resetRunData, getElapsedSeconds } from '../locationTask';
 import { colors } from '../theme';
@@ -41,7 +41,7 @@ export default function RunScreen({ navigation }) {
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.BestForNavigation,
         timeInterval: 1000,
-        distanceInterval: 2,
+        distanceInterval: 4,
         showsBackgroundLocationIndicator: true,
         foregroundService: {
           notificationTitle: '러닝 측정 중',
@@ -84,6 +84,7 @@ export default function RunScreen({ navigation }) {
     const finalElapsed = getElapsedSeconds();
 
     if (finalDistance < 0.01) {
+      await clearInProgress();
       navigation.navigate('홈');
       return;
     }
@@ -97,8 +98,10 @@ export default function RunScreen({ navigation }) {
       kcal,
       avgPace: avgPaceSec,
       splits: runData.splits,
+      path: runData.path,
     };
     await addRun(record);
+    await clearInProgress();
     navigation.replace('완료', { record });
   }
 
