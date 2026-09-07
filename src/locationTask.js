@@ -13,6 +13,7 @@ export const runData = {
   lastTimestamp: null,
   splits: [],
   path: [], // full route, used to draw the map afterwards
+  photos: [], // { uri, latitude, longitude, timestamp }
   startTime: null,
   pausedAt: null,
   pausedTotalMs: 0,
@@ -25,6 +26,7 @@ export function resetRunData() {
   runData.lastTimestamp = null;
   runData.splits = [];
   runData.path = [];
+  runData.photos = [];
   runData.startTime = Date.now();
   runData.pausedAt = null;
   runData.pausedTotalMs = 0;
@@ -52,6 +54,7 @@ async function autosaveProgress() {
     distanceKm: runData.distanceKm,
     path: runData.path,
     splits: runData.splits,
+    photos: runData.photos,
     startTime: runData.startTime,
     pausedTotalMs: runData.pausedTotalMs,
     pausedAt: runData.pausedAt,

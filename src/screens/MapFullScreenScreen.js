@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Image, Modal } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import { getRegion } from './RunDetailScreen';
 import { haversineKm } from '../utils';
 import { colors } from '../theme';
 
 export default function MapFullScreenScreen({ route, navigation }) {
-  const { path } = route.params;
+  const { path, photos = [] } = route.params;
   const [measuring, setMeasuring] = useState(false);
   const [points, setPoints] = useState([]);
+  const [previewPhoto, setPreviewPhoto] = useState(null);
 
-  const totalDist = points.reduce((sum, p, i) => {
-    if (i === 0) return 0;
+  const MAX_POINTS = 20;
+
+  let totalDist = 0;
+  for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
-    return sum + haversineKm(prev.latitude, prev.longitude, p.latitude, p.longitude);
-  }, 0);
+    const cur = points[i];
+    totalDist += haversineKm(prev.latitude, prev.longitude, cur.latitude, cur.longitude);
+  }
 
   function handleMapPress(e) {
     if (!measuring) return;
-    setPoints((prev) => [...prev, e.nativeEvent.coordinate]);
+    const coord = e?.nativeEvent?.coordinate;
+    if (!coord) return;
+    setPoints((prev) => (prev.length >= MAX_POINTS ? prev : [...prev, coord]));
   }
 
   function toggleMeasuring() {
@@ -29,15 +35,25 @@ export default function MapFullScreenScreen({ route, navigation }) {
   return (
     <View style={styles.screen}>
       <MapView style={styles.map} initialRegion={getRegion(path)} onPress={handleMapPress}>
-        <Polyline coordinates={path} strokeColor={colors.trail} strokeWidth={4} />
-        <Marker coordinate={path[0]} pinColor="#2F6B4F" title="출발" />
-        <Marker coordinate={path[path.length - 1]} pinColor="#C1543C" title="도착" />
+        {path.length > 1 && <Polyline coordinates={path} strokeColor={colors.trail} strokeWidth={4} />}
+        {path.length > 0 && <Marker coordinate={path[0]} pinColor="#2F6B4F" title="출발" />}
+        {path.length > 0 && <Marker coordinate={path[path.length - 1]} pinColor="#C1543C" title="도착" />}
 
-        {points.length > 1 && (
-          <Polyline coordinates={points} strokeColor={colors.amber} strokeWidth={3} lineDashPattern={[6, 6]} />
-        )}
+        {photos.map((ph, i) => (
+          <Marker
+            key={`photo-${i}`}
+            coordinate={{ latitude: ph.latitude, longitude: ph.longitude }}
+            onPress={() => setPreviewPhoto(ph)}
+          >
+            <View style={styles.photoMarker}>
+              <Image source={{ uri: ph.uri }} style={styles.photoThumb} />
+            </View>
+          </Marker>
+        ))}
+
+        {points.length > 1 && <Polyline coordinates={points} strokeColor={colors.amber} strokeWidth={3} />}
         {points.map((p, i) => (
-          <Marker key={i} coordinate={p} pinColor={colors.amber} />
+          <Marker key={`pt-${i}-${p.latitude}-${p.longitude}`} coordinate={p} pinColor={colors.amber} />
         ))}
       </MapView>
 
@@ -54,10 +70,14 @@ export default function MapFullScreenScreen({ route, navigation }) {
       {measuring && (
         <View style={styles.measurePanel}>
           <Text style={styles.measureHint}>
-            {points.length === 0 ? '지도를 탭해서 지점을 찍어보세요' : `지점 ${points.length}개 찍음 · 계속 탭해서 이어가세요`}
+            {points.length === 0
+              ? '지도를 탭해서 지점을 찍어보세요'
+              : `지점 ${points.length}개 찍음 · 계속 탭해서 이어가세요`}
           </Text>
           {points.length > 1 && (
-            <Text style={styles.measureDist}>{totalDist < 1 ? `${Math.round(totalDist * 1000)}m` : `${totalDist.toFixed(2)}km`}</Text>
+            <Text style={styles.measureDist}>
+              {totalDist < 1 ? `${Math.round(totalDist * 1000)}m` : `${totalDist.toFixed(2)}km`}
+            </Text>
           )}
           {points.length > 0 && (
             <Pressable style={styles.clearBtn} onPress={() => setPoints([])}>
@@ -66,6 +86,12 @@ export default function MapFullScreenScreen({ route, navigation }) {
           )}
         </View>
       )}
+
+      <Modal visible={!!previewPhoto} transparent animationType="fade" onRequestClose={() => setPreviewPhoto(null)}>
+        <Pressable style={styles.previewBackdrop} onPress={() => setPreviewPhoto(null)}>
+          {previewPhoto && <Image source={{ uri: previewPhoto.uri }} style={styles.previewImage} resizeMode="contain" />}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -111,4 +137,8 @@ const styles = StyleSheet.create({
   measureDist: { fontSize: 28, fontWeight: '600', color: colors.ink, marginBottom: 8 },
   clearBtn: { paddingHorizontal: 14, paddingVertical: 8 },
   clearBtnText: { fontSize: 12, color: colors.alert, fontWeight: '600' },
+  photoMarker: { borderWidth: 2, borderColor: '#fff', borderRadius: 8, overflow: 'hidden', elevation: 3 },
+  photoThumb: { width: 40, height: 40 },
+  previewBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
+  previewImage: { width: '100%', height: '80%' },
 });

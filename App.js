@@ -35,7 +35,7 @@ function HistoryStackScreen() {
       <HistoryStack.Screen
         name="RunDetail"
         component={RunDetailScreen}
-        options={{ headerShown: true, title: '러닝 경로' }}
+        options={{ headerShown: true, title: '러닝 경로', unmountOnBlur: true }}
       />
       <HistoryStack.Screen
         name="MapFullScreen"

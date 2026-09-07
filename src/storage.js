@@ -74,15 +74,7 @@ export async function resetHistory(scope) {
   return filtered;
 }
 
-// Deletes a single run record, matched by its date (used as a unique id
-// since records are created with new Date().toISOString()).
-export async function deleteRun(date) {
-  const history = await getHistory();
-  const next = history.filter((r) => r.date !== date);
-  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-  return next;
-}
-
+// Wipes history: 'all' clears everything, 'week'/'month' keeps everything before that period.
 export async function clearHistory() {
   await AsyncStorage.removeItem(HISTORY_KEY);
 }

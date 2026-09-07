@@ -35,6 +35,7 @@ export default function HomeScreen({ navigation }) {
             avgPace: recoveredElapsed / inProgress.distanceKm,
             splits: inProgress.splits || [],
             path: inProgress.path || [],
+            photos: inProgress.photos || [],
           });
           await clearInProgress();
           Alert.alert(

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Image } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import { fmtTime, fmtPace } from '../utils';
 import { colors } from '../theme';
@@ -26,13 +26,14 @@ export default function RunDetailScreen({ route, navigation }) {
   const { record } = route.params;
   const date = new Date(record.date);
   const path = record.path || [];
+  const photos = record.photos || [];
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
       <Pressable
         style={styles.mapWrap}
         disabled={path.length <= 1}
-        onPress={() => navigation.navigate('MapFullScreen', { path })}
+        onPress={() => navigation.navigate('MapFullScreen', { path, photos })}
       >
         {path.length > 1 ? (
           <>
@@ -40,6 +41,13 @@ export default function RunDetailScreen({ route, navigation }) {
               <Polyline coordinates={path} strokeColor={colors.trail} strokeWidth={4} />
               <Marker coordinate={path[0]} pinColor="#2F6B4F" title="출발" />
               <Marker coordinate={path[path.length - 1]} pinColor="#C1543C" title="도착" />
+              {photos.map((ph, i) => (
+                <Marker key={`photo-${i}`} coordinate={{ latitude: ph.latitude, longitude: ph.longitude }}>
+                  <View style={styles.photoMarker}>
+                    <Image source={{ uri: ph.uri }} style={styles.photoThumbSmall} />
+                  </View>
+                </Marker>
+              ))}
             </MapView>
             <View style={styles.expandHint}>
               <Text style={styles.expandHintText}>탭하면 전체화면으로 볼 수 있어요</Text>
@@ -75,6 +83,17 @@ export default function RunDetailScreen({ route, navigation }) {
             <Text style={styles.cellValue}>{Math.round(record.kcal)} kcal</Text>
           </View>
         </View>
+
+        {photos.length > 0 && (
+          <>
+            <Text style={styles.photoSectionTitle}>사진 {photos.length}장</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+              {photos.map((ph, i) => (
+                <Image key={i} source={{ uri: ph.uri }} style={styles.photoStripImage} />
+              ))}
+            </ScrollView>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -93,4 +112,8 @@ const styles = StyleSheet.create({
   cell: { width: '47%', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 14, alignItems: 'center' },
   cellLabel: { fontSize: 11, color: colors.muted, marginBottom: 6 },
   cellValue: { fontSize: 18, fontWeight: '600', color: colors.ink },
+  photoMarker: { borderWidth: 2, borderColor: '#fff', borderRadius: 6, overflow: 'hidden' },
+  photoThumbSmall: { width: 28, height: 28 },
+  photoSectionTitle: { fontSize: 13, fontWeight: '600', color: colors.ink, marginTop: 20 },
+  photoStripImage: { width: 100, height: 100, borderRadius: 12, marginRight: 8 },
 });

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { getProfile, getHistory, addRun, clearInProgress } from '../storage';
 import { fmtTime, calcKcal } from '../utils';
 import { LOCATION_TASK_NAME, runData, resetRunData, getElapsedSeconds } from '../locationTask';
@@ -12,6 +14,8 @@ export default function RunScreen({ navigation }) {
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [pastTotals, setPastTotals] = useState({ distance: 0, duration: 0 });
+  const [photoCount, setPhotoCount] = useState(0);
+  const [takingPhoto, setTakingPhoto] = useState(false);
 
   const tickRef = useRef(null);
 
@@ -75,6 +79,56 @@ export default function RunScreen({ navigation }) {
     }
   }
 
+  async function takePhoto() {
+    if (takingPhoto) return;
+    setTakingPhoto(true);
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('카메라 권한 필요', '사진을 찍으려면 카메라 권한이 필요해요.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
+      if (result.canceled || !result.assets || !result.assets[0]) return;
+
+      const asset = result.assets[0];
+
+      // Use the run's last known GPS fix; fall back to a fresh reading if we
+      // don't have one yet (e.g. photo taken in the first second of the run).
+      let coord = runData.lastCoord;
+      if (!coord) {
+        try {
+          const current = await Location.getCurrentPositionAsync({});
+          coord = { lat: current.coords.latitude, lon: current.coords.longitude };
+        } catch (e) {
+          coord = null;
+        }
+      }
+      if (!coord) {
+        Alert.alert('위치를 찾을 수 없어요', '위치 정보 없이는 지도에 사진을 표시할 수 없어요.');
+        return;
+      }
+
+      // Copy out of the picker's temp cache so the photo survives after the run.
+      const fileName = `run_photo_${Date.now()}.jpg`;
+      const dest = FileSystem.documentDirectory + fileName;
+      await FileSystem.copyAsync({ from: asset.uri, to: dest });
+
+      runData.photos.push({
+        uri: dest,
+        latitude: coord.lat,
+        longitude: coord.lon,
+        timestamp: Date.now(),
+      });
+      setPhotoCount(runData.photos.length);
+    } catch (e) {
+      Alert.alert('사진 저장 실패', '사진을 저장하는 중 문제가 발생했어요.');
+    } finally {
+      setTakingPhoto(false);
+    }
+  }
+
   async function stopRun() {
     if (tickRef.current) clearInterval(tickRef.current);
     runData.active = false;
@@ -99,6 +153,7 @@ export default function RunScreen({ navigation }) {
       avgPace: avgPaceSec,
       splits: runData.splits,
       path: runData.path,
+      photos: runData.photos,
     };
     await addRun(record);
     await clearInProgress();
@@ -138,6 +193,12 @@ export default function RunScreen({ navigation }) {
         </View>
       </View>
 
+      <Pressable style={styles.photoBtn} onPress={takePhoto} disabled={takingPhoto}>
+        <Text style={styles.photoBtnText}>
+          {takingPhoto ? '처리 중...' : `📷 사진 찍기${photoCount > 0 ? ` (${photoCount}장)` : ''}`}
+        </Text>
+      </Pressable>
+
       <View style={styles.controls}>
         <Pressable style={styles.secondaryBtn} onPress={togglePause}>
           <Text style={styles.secondaryBtnText}>{paused ? '재개' : '일시정지'}</Text>
@@ -159,10 +220,12 @@ const styles = StyleSheet.create({
   distanceWrap: { alignItems: 'center', marginVertical: 24 },
   distanceNum: { fontSize: 64, fontWeight: '600', color: colors.ink },
   distanceUnit: { fontSize: 13, color: colors.muted, textTransform: 'uppercase', letterSpacing: 1, marginTop: 6 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   cell: { width: '47%', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 14, alignItems: 'center' },
   cellLabel: { fontSize: 11, color: colors.muted, marginBottom: 6 },
   cellValue: { fontSize: 20, fontWeight: '600', color: colors.ink },
+  photoBtn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 13, alignItems: 'center', marginBottom: 16 },
+  photoBtnText: { fontWeight: '600', color: colors.ink, fontSize: 14 },
   controls: { flexDirection: 'row', gap: 10 },
   secondaryBtn: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 15, alignItems: 'center' },
   secondaryBtnText: { fontWeight: '600', color: colors.ink },
