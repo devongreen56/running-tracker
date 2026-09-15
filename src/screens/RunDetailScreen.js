@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Image, Modal } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import { fmtTime, fmtPace } from '../utils';
+import { getHistory } from '../storage';
 import { colors } from '../theme';
 
 export function getRegion(path) {
@@ -27,6 +28,27 @@ export default function RunDetailScreen({ route, navigation }) {
   const date = new Date(record.date);
   const path = record.path || [];
   const photos = record.photos || [];
+
+  const [previewPhoto, setPreviewPhoto] = useState(null);
+  const [neighbors, setNeighbors] = useState({ prev: null, next: null });
+
+  // Figure out which record comes before/after this one in the "기록" list
+  // (newest-first order, same as HistoryScreen) so the prev/next buttons work.
+  useEffect(() => {
+    (async () => {
+      const history = await getHistory();
+      const displayList = [...history].reverse(); // newest first
+      const idx = displayList.findIndex((r) => r.date === record.date);
+      if (idx === -1) {
+        setNeighbors({ prev: null, next: null });
+        return;
+      }
+      setNeighbors({
+        prev: idx > 0 ? displayList[idx - 1] : null, // newer run
+        next: idx < displayList.length - 1 ? displayList[idx + 1] : null, // older run
+      });
+    })();
+  }, [record.date]);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -89,12 +111,37 @@ export default function RunDetailScreen({ route, navigation }) {
             <Text style={styles.photoSectionTitle}>사진 {photos.length}장</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
               {photos.map((ph, i) => (
-                <Image key={i} source={{ uri: ph.uri }} style={styles.photoStripImage} />
+                <Pressable key={i} onPress={() => setPreviewPhoto(ph)}>
+                  <Image source={{ uri: ph.uri }} style={styles.photoStripImage} />
+                </Pressable>
               ))}
             </ScrollView>
           </>
         )}
+
+        <View style={styles.navRow}>
+          <Pressable
+            style={[styles.navBtn, !neighbors.prev && styles.navBtnDisabled]}
+            disabled={!neighbors.prev}
+            onPress={() => navigation.setParams({ record: neighbors.prev })}
+          >
+            <Text style={[styles.navBtnText, !neighbors.prev && styles.navBtnTextDisabled]}>‹ 이전 기록</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.navBtn, !neighbors.next && styles.navBtnDisabled]}
+            disabled={!neighbors.next}
+            onPress={() => navigation.setParams({ record: neighbors.next })}
+          >
+            <Text style={[styles.navBtnText, !neighbors.next && styles.navBtnTextDisabled]}>다음 기록 ›</Text>
+          </Pressable>
+        </View>
       </View>
+
+      <Modal visible={!!previewPhoto} transparent animationType="fade" onRequestClose={() => setPreviewPhoto(null)}>
+        <Pressable style={styles.previewBackdrop} onPress={() => setPreviewPhoto(null)}>
+          {previewPhoto && <Image source={{ uri: previewPhoto.uri }} style={styles.previewImage} resizeMode="contain" />}
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -116,4 +163,11 @@ const styles = StyleSheet.create({
   photoThumbSmall: { width: 28, height: 28 },
   photoSectionTitle: { fontSize: 13, fontWeight: '600', color: colors.ink, marginTop: 20 },
   photoStripImage: { width: 100, height: 100, borderRadius: 12, marginRight: 8 },
+  navRow: { flexDirection: 'row', gap: 10, marginTop: 24 },
+  navBtn: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 13, alignItems: 'center' },
+  navBtnDisabled: { opacity: 0.4 },
+  navBtnText: { fontWeight: '600', color: colors.ink, fontSize: 13 },
+  navBtnTextDisabled: { color: colors.muted },
+  previewBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
+  previewImage: { width: '100%', height: '80%' },
 });

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getProfile, getHistory, addRun, clearInProgress } from '../storage';
 import { fmtTime, calcKcal } from '../utils';
 import { LOCATION_TASK_NAME, runData, resetRunData, getElapsedSeconds } from '../locationTask';
