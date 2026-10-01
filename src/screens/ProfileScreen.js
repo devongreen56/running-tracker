@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
 import { getProfile, saveProfile, defaultProfile } from '../storage';
+import { APP_VERSION, BUILD_DATE } from '../buildInfo';
 import { colors } from '../theme';
 
 export default function ProfileScreen() {
@@ -83,6 +84,8 @@ export default function ProfileScreen() {
         <Text style={styles.saveBtnText}>저장하기</Text>
       </Pressable>
       {!!flash && <Text style={styles.flash}>{flash}</Text>}
+
+      <Text style={styles.versionText}>버전 {APP_VERSION} · {BUILD_DATE} 빌드</Text>
     </ScrollView>
   );
 }
@@ -115,4 +118,5 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: colors.ink, borderRadius: 14, padding: 15, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '600' },
   flash: { textAlign: 'center', fontSize: 12, color: colors.trail, marginTop: 8 },
+  versionText: { textAlign: 'center', fontSize: 11, color: colors.faint, marginTop: 20 },
 });

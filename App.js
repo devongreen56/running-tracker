@@ -13,6 +13,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import RunDetailScreen from './src/screens/RunDetailScreen';
 import MapFullScreenScreen from './src/screens/MapFullScreenScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import StatsScreen from './src/screens/StatsScreen';
 import { colors } from './src/theme';
 
 const Tab = createBottomTabNavigator();
@@ -46,7 +47,7 @@ function HistoryStackScreen() {
   );
 }
 
-const icons = { 홈: '⌂', 러닝: '▷', 기록: '☰', 프로필: '◔' };
+const icons = { 홈: '⌂', 러닝: '▷', 기록: '☰', 통계: '◫', 프로필: '◔' };
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
         <Tab.Screen name="홈" component={HomeScreen} />
         <Tab.Screen name="러닝" component={RunStackScreen} options={{ tabBarStyle: { display: 'none' } }} />
         <Tab.Screen name="기록" component={HistoryStackScreen} />
+        <Tab.Screen name="통계" component={StatsScreen} />
         <Tab.Screen name="프로필" component={ProfileScreen} />
       </Tab.Navigator>
     </NavigationContainer>

@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Location from 'expo-location';
 import { getProfile, getHistory, getInProgress, clearInProgress, addRun } from '../storage';
 import { requestStepPermission, getTodaySteps, startLiveStepTracking, stopLiveStepTracking } from '../steps';
 import { calcKcal } from '../utils';
+import { fetchWeather, weatherEmoji, weatherLabel } from '../weather';
 import { colors } from '../theme';
 
 export default function HomeScreen({ navigation }) {
@@ -12,6 +14,22 @@ export default function HomeScreen({ navigation }) {
   const [streak, setStreak] = useState(0);
   const [weekDays, setWeekDays] = useState([]);
   const [steps, setSteps] = useState(0);
+  const [weather, setWeather] = useState(null);
+
+  // Weather doesn't need to refresh every time the screen refocuses — once per app open is enough.
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({});
+        const w = await fetchWeather(loc.coords.latitude, loc.coords.longitude);
+        setWeather(w);
+      } catch (e) {
+        // silently skip — weather is a nice-to-have, not critical
+      }
+    })();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -99,10 +117,23 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-      <Text style={styles.eyebrow}>
-        {today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}
-      </Text>
-      <Text style={styles.hello}>안녕하세요 👋</Text>
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.eyebrow}>
+            {today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}
+          </Text>
+          <Text style={styles.hello}>안녕하세요 👋</Text>
+        </View>
+        {weather && (
+          <View style={styles.weatherPill}>
+            <Text style={styles.weatherEmoji}>{weatherEmoji(weather.code)}</Text>
+            <View>
+              <Text style={styles.weatherTemp}>{weather.temp}°</Text>
+              <Text style={styles.weatherLabel}>{weatherLabel(weather.code)}</Text>
+            </View>
+          </View>
+        )}
+      </View>
 
       <View style={styles.statRow}>
         <View style={styles.statCard}>
@@ -158,6 +189,11 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  weatherPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6 },
+  weatherEmoji: { fontSize: 20 },
+  weatherTemp: { fontSize: 14, fontWeight: '600', color: colors.ink },
+  weatherLabel: { fontSize: 10, color: colors.muted },
   eyebrow: { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.faint, fontWeight: '600' },
   hello: { fontSize: 24, marginTop: 2, marginBottom: 18, fontWeight: '600', color: colors.ink },
   statRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },

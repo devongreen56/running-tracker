@@ -87,22 +87,22 @@ export default function RunDetailScreen({ route, navigation }) {
           {date.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
         </Text>
 
-        <View style={styles.grid}>
-          <View style={styles.cell}>
-            <Text style={styles.cellLabel}>거리</Text>
-            <Text style={styles.cellValue}>{record.distance.toFixed(2)} km</Text>
+        <View style={styles.statRow}>
+          <View style={styles.statCell}>
+            <Text style={styles.statLabel}>거리</Text>
+            <Text style={styles.statValue}>{record.distance.toFixed(2)}<Text style={styles.statUnit}>km</Text></Text>
           </View>
-          <View style={styles.cell}>
-            <Text style={styles.cellLabel}>시간</Text>
-            <Text style={styles.cellValue}>{fmtTime(record.duration)}</Text>
+          <View style={[styles.statCell, styles.statDivider]}>
+            <Text style={styles.statLabel}>시간</Text>
+            <Text style={styles.statValue}>{fmtTime(record.duration)}</Text>
           </View>
-          <View style={styles.cell}>
-            <Text style={styles.cellLabel}>평균 페이스</Text>
-            <Text style={styles.cellValue}>{fmtPace(record.avgPace)}</Text>
+          <View style={[styles.statCell, styles.statDivider]}>
+            <Text style={styles.statLabel}>평균 페이스</Text>
+            <Text style={styles.statValue}>{fmtPace(record.avgPace)}</Text>
           </View>
-          <View style={styles.cell}>
-            <Text style={styles.cellLabel}>소모 칼로리</Text>
-            <Text style={styles.cellValue}>{Math.round(record.kcal)} kcal</Text>
+          <View style={[styles.statCell, styles.statDivider]}>
+            <Text style={styles.statLabel}>칼로리</Text>
+            <Text style={styles.statValue}>{Math.round(record.kcal)}<Text style={styles.statUnit}>kcal</Text></Text>
           </View>
         </View>
 
@@ -155,10 +155,12 @@ const styles = StyleSheet.create({
   noMap: { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   noMapText: { color: colors.muted, fontSize: 13 },
   date: { fontSize: 12, color: colors.muted, marginBottom: 16 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  cell: { width: '47%', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 14, alignItems: 'center' },
-  cellLabel: { fontSize: 11, color: colors.muted, marginBottom: 6 },
-  cellValue: { fontSize: 18, fontWeight: '600', color: colors.ink },
+  statRow: { flexDirection: 'row', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, overflow: 'hidden' },
+  statCell: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center' },
+  statDivider: { borderLeftWidth: 1, borderLeftColor: colors.line },
+  statLabel: { fontSize: 10, color: colors.muted, marginBottom: 3, textAlign: 'center' },
+  statValue: { fontSize: 14, fontWeight: '600', color: colors.ink },
+  statUnit: { fontSize: 10, fontWeight: '400', color: colors.muted },
   photoMarker: { borderWidth: 2, borderColor: '#fff', borderRadius: 6, overflow: 'hidden' },
   photoThumbSmall: { width: 28, height: 28 },
   photoSectionTitle: { fontSize: 13, fontWeight: '600', color: colors.ink, marginTop: 20 },

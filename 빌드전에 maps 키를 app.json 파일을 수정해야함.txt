@@ -1,2 +1,6 @@
 1. 기록 초기화 기능
 2. 기록 삭제 기능
+3. 기록에 지도에 거리 측정 (줄자) 기능 
+
+Google Maps Platform 시작하기(카드 유료 결재)
+- AIzaSyBEHvbTApekvoZm3jZdPKrAO7TxwAOl-U4
