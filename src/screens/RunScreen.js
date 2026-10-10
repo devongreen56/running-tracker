@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, AppState } from 'react-native';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { requestIgnoreBatteryOptimization, showBatteryGuide } from '../battery';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -18,6 +21,53 @@ export default function RunScreen({ navigation }) {
   const [takingPhoto, setTakingPhoto] = useState(false);
 
   const tickRef = useRef(null);
+  const [keepAwake, setKeepAwake] = useState(false);
+
+  async function startTracking() {
+    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+      accuracy: Location.Accuracy.BestForNavigation,
+      timeInterval: 1000,
+      distanceInterval: 2,
+      showsBackgroundLocationIndicator: true,
+      foregroundService: {
+        notificationTitle: '러닝 측정 중',
+        notificationBody: '화면이 꺼져 있어도 거리와 시간을 계속 기록하고 있어요.',
+        notificationColor: '#2F6B4F',
+      },
+      pausesUpdatesAutomatically: false,
+    });
+  }
+
+  // 절전 모드 등으로 시스템이 위치 서비스를 중단시켰으면 자동으로 다시 시작
+  async function ensureTracking() {
+    if (!runData.active) return;
+    try {
+      const on = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (!on) await startTracking();
+    } catch (e) {}
+  }
+
+  async function toggleKeepAwake() {
+    if (keepAwake) {
+      deactivateKeepAwake('run');
+      setKeepAwake(false);
+    } else {
+      await activateKeepAwakeAsync('run');
+      setKeepAwake(true);
+    }
+  }
+
+  // 앱이 다시 앞으로 돌아오면 즉시 값 갱신 + 추적 상태 점검
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') {
+        setDistance(runData.distanceKm);
+        setElapsed(getElapsedSeconds());
+        ensureTracking();
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -42,27 +92,27 @@ export default function RunScreen({ navigation }) {
 
       resetRunData();
 
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: 1000,
-        distanceInterval: 4,
-        showsBackgroundLocationIndicator: true,
-        foregroundService: {
-          notificationTitle: '러닝 측정 중',
-          notificationBody: '화면이 꺼져 있어도 거리와 시간을 계속 기록하고 있어요.',
-          notificationColor: '#2F6B4F',
-        },
-        pausesUpdatesAutomatically: false,
-      });
+      await startTracking();
+
+      // 절전 모드 대응: 처음 한 번 배터리 최적화 제외 요청
+      try {
+        const asked = await AsyncStorage.getItem('runapp_battery_asked');
+        if (!asked) {
+          await AsyncStorage.setItem('runapp_battery_asked', '1');
+          showBatteryGuide();
+        }
+      } catch (e) {}
 
       tickRef.current = setInterval(() => {
         setDistance(runData.distanceKm);
         setElapsed(getElapsedSeconds());
+        ensureTracking();
       }, 1000);
     })();
 
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
+      deactivateKeepAwake('run');
       Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => {});
       runData.active = false;
     };
@@ -207,6 +257,15 @@ export default function RunScreen({ navigation }) {
           <Text style={styles.stopBtnText}>종료</Text>
         </Pressable>
       </View>
+
+      <View style={styles.subControls}>
+        <Pressable style={[styles.chip, keepAwake && styles.chipOn]} onPress={toggleKeepAwake}>
+          <Text style={[styles.chipText, keepAwake && { color: '#fff' }]}>{keepAwake ? '화면 켜짐 유지 ON' : '화면 켜짐 유지'}</Text>
+        </Pressable>
+        <Pressable style={styles.chip} onPress={showBatteryGuide}>
+          <Text style={styles.chipText}>절전 모드 설정</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -227,6 +286,10 @@ const styles = StyleSheet.create({
   photoBtn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 13, alignItems: 'center', marginBottom: 16 },
   photoBtnText: { fontWeight: '600', color: colors.ink, fontSize: 14 },
   controls: { flexDirection: 'row', gap: 10 },
+  subControls: { flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  chipOn: { backgroundColor: colors.trail, borderColor: colors.trail },
+  chipText: { fontSize: 12, color: colors.ink },
   secondaryBtn: { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 15, alignItems: 'center' },
   secondaryBtnText: { fontWeight: '600', color: colors.ink },
   stopBtn: { flex: 1, backgroundColor: colors.alert, borderRadius: 14, padding: 15, alignItems: 'center' },

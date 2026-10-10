@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
 import { getProfile, saveProfile, defaultProfile } from '../storage';
 import { APP_VERSION, BUILD_DATE } from '../buildInfo';
+import { showBatteryGuide, requestIgnoreBatteryOptimization } from '../battery';
 import { colors } from '../theme';
 
 export default function ProfileScreen() {
@@ -84,6 +85,18 @@ export default function ProfileScreen() {
         <Text style={styles.saveBtnText}>저장하기</Text>
       </Pressable>
       {!!flash && <Text style={styles.flash}>{flash}</Text>}
+
+      <Text style={[styles.section, { marginTop: 22 }]}>절전 모드 대응</Text>
+      <View style={styles.group}>
+        <Pressable style={styles.row} onPress={requestIgnoreBatteryOptimization}>
+          <Text style={styles.rowLabel}>배터리 최적화 제외 요청</Text>
+          <Text style={styles.rowLabel}>›</Text>
+        </Pressable>
+        <Pressable style={[styles.row, { borderBottomWidth: 0 }]} onPress={showBatteryGuide}>
+          <Text style={styles.rowLabel}>절전 모드 설정 방법 보기</Text>
+          <Text style={styles.rowLabel}>›</Text>
+        </Pressable>
+      </View>
 
       <Text style={styles.versionText}>버전 {APP_VERSION} · {BUILD_DATE} 빌드</Text>
     </ScrollView>
