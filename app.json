@@ -2,7 +2,7 @@
   "expo": {
     "name": "운동",
     "slug": "running-tracker",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -48,7 +48,7 @@
         "backgroundColor": "#2F6B4F"
       },
       "package": "com.yourname.runningtracker",
-      "versionCode": 3,
+      "versionCode": 4,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBEHvbTApekvoZm3jZdPKrAO7TxwAOl-U4"

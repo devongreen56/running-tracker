@@ -39,9 +39,8 @@ export function getElapsedSeconds() {
 }
 
 // GPS accuracy/noise filtering thresholds
-const MAX_ACCEPTABLE_ACCURACY_M = 25; // ignore fixes worse than this (meters)
-const MIN_MOVEMENT_KM = 0.003; // ignore jitter smaller than ~3m
-const MAX_JUMP_KM = 0.1; // ignore jumps larger than 100m between updates (signal glitch)
+const MAX_ACCEPTABLE_ACCURACY_M = 40; // ignore fixes worse than this (meters)
+const MIN_MOVEMENT_KM = 0.003; // displacement from anchor below ~3m counts as jitter
 const MAX_REALISTIC_SPEED_MS = 8; // ~28.8 km/h, generous cap for a sprinting recreational runner
 
 let lastAutosaveTs = 0;
@@ -76,23 +75,19 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
     }
 
     if (runData.lastCoord) {
+      // lastCoord/lastTimestamp = "anchor": the last point that was actually counted.
       const d = haversineKm(runData.lastCoord.lat, runData.lastCoord.lon, latitude, longitude);
-      const dtSec = runData.lastTimestamp ? Math.max(0.5, (timestamp - runData.lastTimestamp) / 1000) : 1;
-      const impliedSpeed = (d * 1000) / dtSec; // m/s
+      const dtSec = Math.max(0.5, (timestamp - runData.lastTimestamp) / 1000);
+      const impliedSpeed = (d * 1000) / dtSec; // m/s measured from the anchor
 
-      // Ignore GPS glitches: unrealistic jump distance or unrealistic speed
-      if (d >= MAX_JUMP_KM || impliedSpeed > MAX_REALISTIC_SPEED_MS) {
-        runData.lastTimestamp = timestamp;
-        return; // don't update lastCoord either — treat as a bad fix, wait for the next one
-      }
+      // Unrealistic speed from the anchor = GPS glitch. Keep the anchor and its
+      // timestamp, so after a gap the elapsed time grows and a real position passes.
+      if (impliedSpeed > MAX_REALISTIC_SPEED_MS) return;
 
-      // Ignore tiny jitter (device sitting still, signal wobble) — but still
-      // move the reference point so error doesn't compound.
-      if (d < MIN_MOVEMENT_KM) {
-        runData.lastCoord = { lat: latitude, lon: longitude };
-        runData.lastTimestamp = timestamp;
-        return;
-      }
+      // Jitter: do NOT move the anchor. Small steps accumulate until the total
+      // displacement exceeds the threshold (previously every ~2.5m step was
+      // thrown away, which made running distance far too short).
+      if (d < MIN_MOVEMENT_KM) return;
 
       runData.distanceKm += d;
       runData.path.push({ latitude, longitude });
