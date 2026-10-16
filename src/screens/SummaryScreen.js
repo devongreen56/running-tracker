@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-nati
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { fmtTime, fmtPace } from '../utils';
+import RunWalkRow from '../RunWalkRow';
 import { colors } from '../theme';
 
 export default function SummaryScreen({ route, navigation }) {
@@ -57,6 +58,8 @@ export default function SummaryScreen({ route, navigation }) {
               <Text style={[styles.cellValue, { color: colors.trail }]}>{Math.round(record.kcal)} kcal</Text>
             </View>
           </View>
+
+          <RunWalkRow record={record} />
 
           <Text style={styles.watermark}>🏃 운동</Text>
         </View>

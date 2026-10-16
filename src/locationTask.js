@@ -17,6 +17,11 @@ export const runData = {
   startTime: null,
   pausedAt: null,
   pausedTotalMs: 0,
+  runKm: 0,
+  walkKm: 0,
+  runSec: 0,
+  walkSec: 0,
+  win: [], // recent counted points {t, km} for smoothed speed
 };
 
 export function resetRunData() {
@@ -30,6 +35,11 @@ export function resetRunData() {
   runData.startTime = Date.now();
   runData.pausedAt = null;
   runData.pausedTotalMs = 0;
+  runData.runKm = 0;
+  runData.walkKm = 0;
+  runData.runSec = 0;
+  runData.walkSec = 0;
+  runData.win = [];
 }
 
 export function getElapsedSeconds() {
@@ -41,6 +51,10 @@ export function getElapsedSeconds() {
 // GPS accuracy/noise filtering thresholds
 const MAX_ACCEPTABLE_ACCURACY_M = 40; // ignore fixes worse than this (meters)
 const MIN_MOVEMENT_KM = 0.003; // displacement from anchor below ~3m counts as jitter
+// Speed (m/s, smoothed over ~10s) at or above this counts as running, below as walking.
+// 2.0 m/s = 7.2 km/h (about 8:20 min/km).
+const RUN_SPEED_MS = 2.0;
+const WINDOW_MS = 10000;
 const MAX_REALISTIC_SPEED_MS = 8; // ~28.8 km/h, generous cap for a sprinting recreational runner
 
 let lastAutosaveTs = 0;
@@ -57,6 +71,10 @@ async function autosaveProgress() {
     startTime: runData.startTime,
     pausedTotalMs: runData.pausedTotalMs,
     pausedAt: runData.pausedAt,
+    runKm: runData.runKm,
+    walkKm: runData.walkKm,
+    runSec: runData.runSec,
+    walkSec: runData.walkSec,
     savedAt: now,
   });
 }
@@ -90,6 +108,20 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
       if (d < MIN_MOVEMENT_KM) return;
 
       runData.distanceKm += d;
+
+      // Classify this segment as running or walking using speed over the last ~10s
+      const w = runData.win;
+      w.push({ t: timestamp, km: runData.distanceKm });
+      while (w.length > 2 && timestamp - w[0].t > WINDOW_MS) w.shift();
+      const spanSec = (timestamp - w[0].t) / 1000;
+      const speed = spanSec >= 3 ? ((runData.distanceKm - w[0].km) * 1000) / spanSec : impliedSpeed;
+      if (speed >= RUN_SPEED_MS) {
+        runData.runKm += d;
+        runData.runSec += dtSec;
+      } else {
+        runData.walkKm += d;
+        runData.walkSec += dtSec;
+      }
       runData.path.push({ latitude, longitude });
       const elapsedSec = getElapsedSeconds();
       if (Math.floor(runData.distanceKm) > runData.splits.length) {

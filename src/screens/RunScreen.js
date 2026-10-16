@@ -202,6 +202,10 @@ export default function RunScreen({ navigation }) {
       kcal,
       avgPace: avgPaceSec,
       splits: runData.splits,
+      runKm: runData.runKm,
+      walkKm: runData.walkKm,
+      runSec: runData.runSec,
+      walkSec: runData.walkSec,
       path: runData.path,
       photos: runData.photos,
     };

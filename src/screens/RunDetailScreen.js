@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Image, Modal } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import { fmtTime, fmtPace } from '../utils';
+import RunWalkRow from '../RunWalkRow';
 import { getHistory } from '../storage';
 import { colors } from '../theme';
 
@@ -105,6 +106,7 @@ export default function RunDetailScreen({ route, navigation }) {
             <Text style={styles.statValue}>{Math.round(record.kcal)}<Text style={styles.statUnit}>kcal</Text></Text>
           </View>
         </View>
+        <RunWalkRow record={record} />
 
         {photos.length > 0 && (
           <>

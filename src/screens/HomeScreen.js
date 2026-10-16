@@ -52,6 +52,10 @@ export default function HomeScreen({ navigation }) {
             kcal: recoveredKcal,
             avgPace: recoveredElapsed / inProgress.distanceKm,
             splits: inProgress.splits || [],
+            runKm: inProgress.runKm || 0,
+            walkKm: inProgress.walkKm || 0,
+            runSec: inProgress.runSec || 0,
+            walkSec: inProgress.walkSec || 0,
             path: inProgress.path || [],
             photos: inProgress.photos || [],
           });

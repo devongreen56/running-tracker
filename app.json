@@ -2,7 +2,7 @@
   "expo": {
     "name": "운동",
     "slug": "running-tracker",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#F6F5F1"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "plugins": [
       [
         "expo-location",
@@ -37,9 +35,7 @@
         "NSLocationWhenInUseUsageDescription": "러닝 중 이동 거리를 측정하기 위해 위치 정보가 필요해요.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "화면이 꺼져 있어도 러닝 중 이동 거리를 계속 측정하기 위해 위치 정보가 필요해요.",
         "NSMotionUsageDescription": "걸음 수를 측정하기 위해 동작 정보가 필요해요.",
-        "UIBackgroundModes": [
-          "location"
-        ]
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -48,34 +44,23 @@
         "backgroundColor": "#2F6B4F"
       },
       "package": "com.yourname.runningtracker",
-      "versionCode": 4,
+      "versionCode": 5,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBEHvbTApekvoZm3jZdPKrAO7TxwAOl-U4"
         }
       },
       "permissions": [
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION",
-        "android.permission.ACTIVITY_RECOGNITION",
-        "android.permission.CAMERA",
-        "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-        "android.permission.WAKE_LOCK",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "ACTIVITY_RECOGNITION",
+        "CAMERA",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "WAKE_LOCK"
       ]
-    },
-    "extra": {
-      "eas": {
-        "projectId": "a4e80227-c58a-4190-92aa-15c8250ddae4"
-      }
     }
   }
 }
